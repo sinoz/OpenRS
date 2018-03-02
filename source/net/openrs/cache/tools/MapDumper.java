@@ -47,6 +47,8 @@ public class MapDumper {
         }
         
 		try (Cache cache = new Cache(FileStore.open(Constants.CACHE_PATH))) {
+			XTEAManager.loadFromText();
+
 			for (int i = 0; i < 32768; i++) {			
 				int[] keys = XTEAManager.lookupMap(i);
 

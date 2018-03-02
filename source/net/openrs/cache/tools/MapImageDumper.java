@@ -75,7 +75,7 @@ public class MapImageDumper {
 		TypeListManager.initialize(cache);
 		Textures.initialize(cache);
 		Sprites.initialize(cache);
-		XTEAManager.touch();
+		XTEAManager.loadFromRuneLite();
 		
 		for (int i = 0; i < MAX_REGION; i++)
 		{
@@ -142,7 +142,8 @@ public class MapImageDumper {
 	
 	private void draw() throws IOException
 	{
-		
+		System.out.println("amt regions: " + regions.size());
+
 		int minX = lowestX.getBaseX();
 		int minY = lowestY.getBaseY();
 
@@ -162,7 +163,7 @@ public class MapImageDumper {
 		BufferedImage fullImage = new BufferedImage(dimX, dimY, BufferedImage.TYPE_INT_RGB);
 		
 		Graphics2D graphics = fullImage.createGraphics();
-		
+
 		//Draw Underlay Map - Pass 1
 		for (Region region : regions)
 		{

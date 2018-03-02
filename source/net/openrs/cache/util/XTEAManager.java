@@ -19,24 +19,29 @@
 package net.openrs.cache.util;
 
 import java.io.File;
+import java.io.FileReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.google.gson.Gson;
 import net.openrs.cache.Constants;
+import net.openrs.cache.util.runelite.RuneLiteXTEAEntry;
 
 /**
  * @author Kyle Friz
- * 
- * @since Jun 30, 2015
+ * @author Sino
+ *
+ * @since Jun 30, 2015, March 2, 2018
  */
 public class XTEAManager {
+      private static final String RUNELITE_URL = "http://api.runelite.net/runelite-1.2.18/xtea";
 
-      private static final Map<Integer, int[]> maps = new HashMap<Integer, int[]>();
-      private static final Map<Integer, int[]> tables = new HashMap<Integer, int[]>();
+      private static final Map<Integer, int[]> maps = new HashMap<>();
+      private static final Map<Integer, int[]> tables = new HashMap<>();
 
       public static final int[] NULL_KEYS = new int[4];
 
@@ -56,7 +61,39 @@ public class XTEAManager {
             return keys;
       }
 
-      static {
+      public static void loadFromRuneLite() {
+            try {
+                  URL url = new URL(RUNELITE_URL);
+                  URLConnection connection = url.openConnection();
+                  connection.addRequestProperty("User-Agent", "Mozilla/4.76");
+
+                  StringBuilder bldr = new StringBuilder();
+                  try (Scanner scanner = new Scanner(connection.getInputStream())) {
+                        while (scanner.hasNext()) {
+                              bldr.append(scanner.nextLine());
+                        }
+                  }
+
+                  loadFromJSON(bldr.toString());
+            } catch (Exception e) {
+                  e.printStackTrace();
+            }
+      }
+
+      public static void loadFromJSON(String jsonString) {
+            try {
+                  Gson gson = new Gson();
+                  RuneLiteXTEAEntry[] entries = gson.fromJson(jsonString, RuneLiteXTEAEntry[].class);
+                  for (RuneLiteXTEAEntry entry : entries) {
+                        maps.put(entry.getRegion(), entry.getKeys());
+                        tables.put(entry.getRegion(), entry.getKeys());
+                  }
+            } catch (Exception e) {
+                  e.printStackTrace();
+            }
+      }
+
+      public static void loadFromText() {
             try {
 
                   File xMapDir = new File(Constants.XMAP_PATH);
@@ -68,11 +105,11 @@ public class XTEAManager {
                   for (File file : xMapDir.listFiles()) {
                         if (file.getName().endsWith(".txt")) {
                               Integer regionID = Integer.valueOf(file.getName().substring(0,
-                                          file.getName().indexOf(".txt")));
+                                  file.getName().indexOf(".txt")));
 
                               int[] keys = Files.lines(Paths.get(".")
-                                          .resolve(Constants.XMAP_PATH + file.getName()))
-                                          .map(Integer::valueOf).mapToInt(Integer::intValue).toArray();
+                                  .resolve(Constants.XMAP_PATH + file.getName()))
+                                  .map(Integer::valueOf).mapToInt(Integer::intValue).toArray();
 
                               maps.put(regionID, keys);
                         }
@@ -87,11 +124,11 @@ public class XTEAManager {
                   for (File file : xTableDir.listFiles()) {
                         if (file.getName().endsWith(".txt")) {
                               Integer typeID = Integer.valueOf(file.getName().substring(0,
-                                          file.getName().indexOf(".txt")));
+                                  file.getName().indexOf(".txt")));
 
                               int[] keys = Files.lines(Paths.get(".")
-                                      .resolve(Constants.XTABLE_PATH + file.getName()))
-                                      .map(Integer::valueOf).mapToInt(Integer::intValue).toArray();
+                                  .resolve(Constants.XTABLE_PATH + file.getName()))
+                                  .map(Integer::valueOf).mapToInt(Integer::intValue).toArray();
 
                               tables.put(typeID, keys);
                         }
@@ -100,7 +137,4 @@ public class XTEAManager {
                   e.printStackTrace();
             }
       }
-      
-      public static void touch() { };
-      
 }
